@@ -14,7 +14,7 @@
  *		<p> Click <a href="/">here</a> to go to the homepage </p>
  *	$sidebar->endBox();
  *
- * HTML Rendered:
+ * HTML Rendered by $sidebar->getSidebar() :
  *
  *	<div id="sidebar">
  * 		<div id="sidebox_1" class="sidebox">
