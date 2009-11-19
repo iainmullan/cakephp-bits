@@ -5,6 +5,8 @@
  * 
  * In theory could be adapted to suit any type of beforeSave logic.
  * 
+ * Copyright (c) Iain Mullan 2009
+ *
  * @author Iain Mullan
  * @created 16th November 2009
  */
