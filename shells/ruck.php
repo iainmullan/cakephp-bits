@@ -31,6 +31,8 @@
  */
 class RuckShell extends Shell {
 
+	var $backupConfig = false;
+	
 	public function main() {
 
 	}
@@ -46,35 +48,67 @@ class RuckShell extends Shell {
 	function version() {
 		$this->_main('db', 'version');
 	}
+	
+	function add() {
+		$this->generate();
+	}
 
-	function generate($name) {
+	function generate() {
+		if (empty($this->args)) {
+			$this->out("\nUsage: cake ruck generate <migration name>\n");
+			exit();
+		}
+		$name = $this->args[0];
 		$command = 'php generate.php '.$name;
 		$this->_exec($command);
 	}
 
 	function migrate() {
-		$version = $this->args[0];
-		$this->_main('db', 'migrate', 'VERSION='.$version);
+		if (empty($this->args)) {
+			$args = '';
+		} else {
+			$args = 'VERSION='.$this->args[0];
+		}
+		$this->_main('db', 'migrate', $args);
 	}
 
 	/**
-	 * Currently only supports copying 'default' config from Cake into 'development' config of Ruckusing
+	 * Invoke this task with no arguments to output the current Ruck Db config.
+	 * Alternatively give the name of a CakeDB config, to copy those details to the Ruck db config.
 	 */
 	function config() {
+
+		if (empty($this->args)) {
+			$this->_readConfig();
+		} else {
+			$config = $this->args[0];
+			$this->_writeConfig($config);
+		}
+		
+	}
+	
+	private function _writeConfig($config) {
+		
 		// Copy the Cake app's db config details to the ruckusing db config
+		echo 'Copying $'.$config.' db config';
 
 		// filename APP/vendors/ruckusing/config/database.inc.php
 		chdir(APP."vendors/ruckusing/config");
 
 		// backup the old version first
-		rename('database.inc.php', 'database.inc.php.'.time());
+		if ($this->backupConfig) {
+			rename('database.inc.php', 'database.inc.php.'.time());
+		}
 
 
 		// get the cake details
         App::Import('ConnectionManager');
-        $ds = ConnectionManager::getDataSource('default');
+        $ds = ConnectionManager::getDataSource($config);
         $dsc = $ds->config;
 
+        if ($dsc['driver'] == 'mysqli') {
+        	$dsc['driver'] = 'mysql';
+        }
 		// generate the contents of the whole file
 
 		$contents = "<?php
@@ -93,6 +127,12 @@ class RuckShell extends Shell {
 		$file = fopen('database.inc.php', 'a+');
 		fwrite($file, $contents);
 		fclose($file);
+	}
+	
+	private function _readConfig() {
+		chdir(APP."vendors/ruckusing/config");
+		$file = file('database.inc.php');
+		print_r($file);
 	}
 
 	private function _exec($command) {
